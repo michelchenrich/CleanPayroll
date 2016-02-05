@@ -21,15 +21,15 @@ end
 
 set :sessions => true
 
-register do
+register {
   def has_any_role?(*roles)
     condition do
       redirect '/login' unless has_session?
     end
   end
-end
+}
 
-helpers do
+helpers {
   def display_view(template, model={})
     erb(template, locals: model)
   end
@@ -37,31 +37,28 @@ helpers do
   def has_session?
     @user != nil
   end
-end
+}
 
-before do
+before {
   @user = User.get(session[:user_id])
-end
+}
 
-get('/') do
-  ee = User.new
-  ee.first_name = 'Michel'
-  ee.last_name = 'Henrich'
+get('/') {
   display_view(:index)
-end
+}
 
-get('/protected', has_any_role?: [:user]) do
+get('/protected', has_any_role?: [:user]) {
   display_view(:protected)
-end
+}
 
-get('/login') do
+get('/login') {
   if has_session?
     redirect '/'
   else
     display_view(:login)
   end
-end
-post('/login') do
+}
+post('/login') {
   user = User.first(username: params[:username])
   if user && user.password == params[:password]
     session[:user_id] = user.id
@@ -69,7 +66,26 @@ post('/login') do
   else
     redirect '/login'
   end
-end
+}
+
+get('/register') {
+	display_view(:register)
+}
+post('/register') {
+  user = User.new
+  user.username = params[:username]
+  user.password = params[:password]
+  user.save
+  
+  user = User.first(username: params[:username])
+  if user
+    session[:user_id] = user.id
+    redirect '/'
+  else
+    redirect '/register'
+  end
+}
+
 get('/logout') {
   session[:user_id] = nil
   redirect '/'
