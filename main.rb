@@ -69,7 +69,7 @@ post('/login') {
 }
 
 get('/register') {
-	display_view(:register)
+  display_view(:register)
 }
 post('/register') {
   user = User.new
