@@ -1,9 +1,8 @@
-require 'sinatra'
 require 'bcrypt'
-require 'data_mapper'
-require 'dm-mysql-adapter'
+require 'bundler'
+Bundler.require(:default, ENV['RACK_ENV'])
 
-DataMapper.setup(:default, ENV['DATABASE_URL'] || 'mysql://root:root@localhost/CleanPayroll_development')
+DataMapper.setup(:default, ENV['DATABASE_URL'])
 
 class User
   include(DataMapper::Resource)

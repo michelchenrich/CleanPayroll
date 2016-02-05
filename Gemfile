@@ -2,5 +2,11 @@ source 'https://rubygems.org'
 
 gem 'sinatra'
 gem 'data_mapper'
-gem 'dm-mysql-adapter'
-gem 'dm-postgres-adapter'
+
+group :test do
+  gem 'dm-mysql-adapter'
+end
+
+group :production do
+  gem 'dm-postgres-adapter'
+end
