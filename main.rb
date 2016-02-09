@@ -1,95 +1,53 @@
-require 'bcrypt'
-require 'bundler'
+require('bundler')
 Bundler.require(:default, ENV['RACK_ENV'])
+require('./records')
+require('./use_cases')
+require('./session')
 
-DataMapper.setup(:default, ENV['DATABASE_URL'])
+class Main < Sinatra::Application
+  set(sessions: true)
 
-class User
-  include(DataMapper::Resource)
-  include(BCrypt)
-
-  property(:id, Serial, key: true)
-  property(:username, String, length: 3..50)
-  property(:first_name, String)
-  property(:last_name, String)
-  property(:password, BCryptHash)
-
-  def name
-    "#{first_name} #{last_name}"
-  end
-end
-
-set :sessions => true
-
-register {
-  def has_any_role?(*roles)
-    condition do
-      redirect '/login' unless has_session?
+  register {
+    def has_any_role?(*roles)
+      condition { redirect('/login') unless @session.exists? }
     end
-  end
-}
+  }
 
-helpers {
-  def display_view(template, model={})
-    erb(template, locals: model)
-  end
+  helpers {
+    def display_view(template, model={})
+      erb(template, locals: model)
+    end
+  }
 
-  def has_session?
-    @user != nil
-  end
-}
+  before {
+    @session ||= Session.new(self)
+    @session.refresh
+  }
 
-before {
-  @user = User.get(session[:user_id])
-}
+  get('/') {
+    display_view(:index)
+  }
 
-get('/') {
-  display_view(:index)
-}
+  get('/protected', has_any_role?: [:user]) {
+    display_view(:protected)
+  }
 
-get('/protected', has_any_role?: [:user]) {
-  display_view(:protected)
-}
-
-get('/login') {
-  if has_session?
-    redirect '/'
-  else
+  get('/login') {
+    redirect('/') if @session.exists?
     display_view(:login)
-  end
-}
-post('/login') {
-  user = User.first(username: params[:username])
-  if user && user.password == params[:password]
-    session[:user_id] = user.id
-    redirect '/'
-  else
-    redirect '/login'
-  end
-}
+  }
+  post('/login') {
+    LoginUseCase.new(params[:username], params[:password], @session).execute
+  }
 
-get('/register') {
-  display_view(:register)
-}
-post('/register') {
-  user = User.new
-  user.username = params[:username]
-  user.password = params[:password]
-  user.save
-  
-  user = User.first(username: params[:username])
-  if user
-    session[:user_id] = user.id
-    redirect '/'
-  else
-    redirect '/register'
-  end
-}
+  get('/register') {
+    display_view(:register)
+  }
+  post('/register') {
+    RegisterUseCase.new(params[:username], params[:password], @session).execute
+  }
 
-get('/logout') {
-  session[:user_id] = nil
-  redirect '/'
-}
-
-DataMapper.finalize
-DataMapper.auto_upgrade!
+  get('/logout') {
+    @session.clear
+  }
+end

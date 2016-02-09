@@ -1,12 +1,13 @@
-source 'https://rubygems.org'
+source('https://rubygems.org')
 
-gem 'sinatra'
-gem 'data_mapper'
+gem('bcrypt')
+gem('sinatra', require: 'sinatra/base')
+gem('data_mapper')
 
-group :test do
-  gem 'dm-mysql-adapter'
-end
+group(:test, :development) {
+  gem('dm-mysql-adapter')
+}
 
-group :production do
-  gem 'dm-postgres-adapter'
-end
+group(:production) {
+  gem('dm-postgres-adapter')
+}

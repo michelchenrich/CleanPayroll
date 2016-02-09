@@ -81,10 +81,8 @@ PLATFORMS
   x64-mingw32
 
 DEPENDENCIES
+  bcrypt
   data_mapper
   dm-mysql-adapter
   dm-postgres-adapter
   sinatra
-
-BUNDLED WITH
-   1.11.2
